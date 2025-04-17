@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   return (
-    <div className="relative overflow-hidden py-20 sm:py-32">
+    <div className="relative overflow-hidden py-12 sm:py-20 lg:py-32">
       {/* Background pattern/grid */}
       <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
       
@@ -15,25 +15,25 @@ const HeroSection = () => {
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <div className="text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight">
             <span className="block">High-Performance</span>
             <span className="block mt-2 gradient-text">AI Infrastructure</span>
           </h1>
-          <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-cepheus-gray-light">
+          <p className="mt-4 sm:mt-6 max-w-2xl mx-auto text-base sm:text-lg lg:text-xl text-cepheus-gray-light">
             Cepheus provides <span className="text-cepheus-green">OpenAI-compatible APIs</span> for FREE during beta. 
             Easily integrate with 80+ cutting-edge AI models with a simple API call.
           </p>
-          <div className="mt-10 flex justify-center gap-4">
-            <Button asChild className="text-black bg-cepheus-green hover:bg-cepheus-green-dark px-8 py-6 text-lg">
+          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row justify-center gap-4 px-4">
+            <Button asChild className="text-black bg-cepheus-green hover:bg-cepheus-green-dark px-6 py-5 w-full sm:w-auto text-base sm:text-lg">
               <Link to="/docs">Get Started</Link>
             </Button>
-            <Button asChild variant="outline" className="border-cepheus-gray-dark hover:bg-cepheus-darker px-8 py-6 text-lg">
-              <Link to="/models" className="flex items-center">
+            <Button asChild variant="outline" className="border-cepheus-gray-dark hover:bg-cepheus-darker px-6 py-5 w-full sm:w-auto text-base sm:text-lg">
+              <Link to="/models" className="flex items-center justify-center">
                 Explore Models <ArrowRightIcon className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
-          <div className="mt-8 text-cepheus-gray">
+          <div className="mt-6 sm:mt-8 text-cepheus-gray text-sm sm:text-base">
             <p>Free during beta • 20 requests per minute • No credit card required</p>
           </div>
         </div>

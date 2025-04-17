@@ -1,15 +1,14 @@
-
 import { Link } from "react-router-dom";
 import { Github, Twitter, Linkedin } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="border-t border-cepheus-gray-dark/30 bg-cepheus-darker pt-12 pb-8">
+    <footer className="border-t border-cepheus-gray-dark/30 bg-cepheus-darker pt-8 sm:pt-12 pb-6 sm:pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-1">
             <Link to="/" className="flex items-center">
-              <span className="text-2xl font-bold text-cepheus-green">Cepheus</span>
+              <span className="text-xl sm:text-2xl font-bold text-cepheus-green">Cepheus</span>
             </Link>
             <p className="mt-2 text-gray-400 text-sm">
               Free OpenAI-compatible APIs with 20 RPM rate limits during beta.
@@ -27,8 +26,8 @@ const Footer = () => {
             </div>
           </div>
 
-          <div>
-            <h3 className="text-cepheus-green-light font-medium mb-3">Resources</h3>
+          <div className="space-y-4">
+            <h3 className="text-cepheus-green-light font-medium">Resources</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/docs" className="text-gray-400 hover:text-cepheus-green text-sm">
@@ -53,8 +52,8 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div>
-            <h3 className="text-cepheus-green-light font-medium mb-3">Company</h3>
+          <div className="space-y-4">
+            <h3 className="text-cepheus-green-light font-medium">Company</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/about" className="text-gray-400 hover:text-cepheus-green text-sm">
@@ -79,18 +78,18 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div>
-            <h3 className="text-cepheus-green-light font-medium mb-3">Stay Updated</h3>
+          <div className="space-y-4">
+            <h3 className="text-cepheus-green-light font-medium">Stay Updated</h3>
             <p className="text-gray-400 text-sm mb-3">
               Subscribe to our newsletter for the latest updates.
             </p>
-            <div className="flex">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="email"
                 placeholder="Your email"
-                className="bg-cepheus-dark border border-cepheus-gray-dark/50 text-gray-300 px-3 py-2 rounded-l-md focus:outline-none focus:ring-1 focus:ring-cepheus-green flex-grow"
+                className="bg-cepheus-dark border border-cepheus-gray-dark/50 text-gray-300 px-3 py-2 rounded-md sm:rounded-l-md sm:rounded-r-none focus:outline-none focus:ring-1 focus:ring-cepheus-green flex-grow"
               />
-              <button className="bg-cepheus-green hover:bg-cepheus-green-dark text-black px-3 py-2 rounded-r-md font-medium">
+              <button className="bg-cepheus-green hover:bg-cepheus-green-dark text-black px-3 py-2 rounded-md sm:rounded-l-none sm:rounded-r-md font-medium">
                 Subscribe
               </button>
             </div>
