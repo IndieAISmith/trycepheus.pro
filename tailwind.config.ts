@@ -61,7 +61,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				cepheus: {
+					'dark': '#0A0E15',
+					'darker': '#060A0F',
+					'green': '#4ADE80',
+					'green-dark': '#22c55e',
+					'green-light': '#86efac',
+					'gray': '#94A3B8',
+					'gray-dark': '#64748B',
+					'gray-light': '#CBD5E1',
+					'accent': '#3b82f6',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
