@@ -1,4 +1,6 @@
 import MainLayout from "@/components/layout/MainLayout";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const About = () => {
   return (
@@ -74,9 +76,9 @@ const About = () => {
               We're just getting started, and we'd love for you to be part of our story. Whether you're a developer looking to build the next big thing or a business seeking to leverage AI, Cepheus is here to help you succeed.
             </p>
             <div className="mt-8">
-              <a href="/docs" className="inline-block bg-cepheus-green hover:bg-cepheus-green-dark text-black font-medium px-6 py-3 rounded-md">
-                Get Started Free
-              </a>
+              <Button asChild className="inline-block bg-cepheus-green hover:bg-cepheus-green-dark text-black font-medium px-6 py-3 rounded-md">
+                <Link to="/docs">Get Started Free</Link>
+              </Button>
             </div>
           </section>
         </div>

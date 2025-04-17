@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
@@ -65,8 +64,8 @@ const Navbar = () => {
           </div>
           
           <div className="hidden md:block">
-            <Button variant="default" className="bg-cepheus-green hover:bg-cepheus-green-dark text-black font-medium">
-              Get Started
+            <Button asChild variant="default" className="bg-cepheus-green hover:bg-cepheus-green-dark text-black font-medium">
+              <Link to="/docs">Get Started</Link>
             </Button>
           </div>
           
@@ -110,8 +109,8 @@ const Navbar = () => {
               Blog
             </Link>
             <div className="pt-2">
-              <Button variant="default" className="w-full bg-cepheus-green hover:bg-cepheus-green-dark text-black font-medium">
-                Get Started
+              <Button asChild variant="default" className="w-full bg-cepheus-green hover:bg-cepheus-green-dark text-black font-medium">
+                <Link to="/docs">Get Started</Link>
               </Button>
             </div>
           </div>
