@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Docs from "./pages/Docs";
 import Cookbook from "./pages/Cookbook";
+import HallucinationGuardrails from "./pages/cookbook/HallucinationGuardrails";
+import RateLimits from "./pages/cookbook/RateLimits";
 import PromptEngineering from "./pages/PromptEngineering";
 import Models from "./pages/Models";
 import About from "./pages/About";
@@ -25,6 +27,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/docs" element={<Docs />} />
           <Route path="/cookbook" element={<Cookbook />} />
+          <Route path="/cookbook/hallucination-guardrails" element={<HallucinationGuardrails />} />
+          <Route path="/cookbook/rate-limits" element={<RateLimits />} />
           <Route path="/prompt-engineering" element={<PromptEngineering />} />
           <Route path="/models" element={<Models />} />
           <Route path="/about" element={<About />} />

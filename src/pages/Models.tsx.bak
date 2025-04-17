@@ -67,13 +67,13 @@ const Models = () => {
       ]
     },
     { 
-      name: "meta/llama-3.3-70b-versatile", 
+      name: "meta/llama-3.3-70b", 
       provider: "Meta", 
       category: "Llama",
       features: [
-        "70 billion parameter model",
-        "Versatile for multiple tasks",
-        "Strong reasoning capabilities"
+        "Strong reasoning capabilities",
+        "High accuracy on complex tasks",
+        "Balanced performance and speed"
       ]
     },
     { 

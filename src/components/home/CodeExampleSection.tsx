@@ -65,10 +65,9 @@ curl https://cepheus-x.vercel.app/v1/chat/completions \\
     <section className="py-12 sm:py-20 relative overflow-hidden">
       {/* Decorative patterns */}
       <div className="absolute inset-0 opacity-10 pattern-grid"></div>
-      <div className="absolute -top-40 left-1/4 w-96 h-96 bg-cepheus-accent/5 rounded-full filter blur-3xl"></div>
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8 sm:mb-12">
+        <div className="mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
             Batch Processing Optimized For High-Volume Workloads
           </h2>
@@ -79,7 +78,7 @@ curl https://cepheus-x.vercel.app/v1/chat/completions \\
         
         <div className="bg-cepheus-darker rounded-xl border border-cepheus-gray-dark/30 p-4 sm:p-6 md:p-8 shadow-xl overflow-hidden">
           <Tabs defaultValue="python" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4 bg-cepheus-dark border border-cepheus-gray-dark/30 overflow-x-auto flex whitespace-nowrap">
+            <TabsList className="mb-4">
               <TabsTrigger value="python" className="data-[state=active]:bg-cepheus-green data-[state=active]:text-black">
                 Python
               </TabsTrigger>

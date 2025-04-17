@@ -1,9 +1,59 @@
-
 import MainLayout from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CodeBlock from "@/components/shared/CodeBlock";
+import { useState, useEffect, useRef } from "react";
+import { Menu, X } from "lucide-react";
 
 const Docs = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  const navigationItems = [
+    { title: "Getting Started", href: "#getting-started" },
+    { title: "Text Input and Output", href: "#text-input-output" },
+    { title: "Choosing a Model", href: "#choosing-model" },
+    { title: "Prompt Engineering", href: "#prompt-engineering" },
+    { title: "Message Roles", href: "#message-roles" },
+    { title: "Message Formatting", href: "#message-formatting" },
+    { title: "Few-shot Learning", href: "#few-shot-learning" },
+    { title: "Include Context", href: "#include-context" },
+  ];
+
+  // Handle scroll events to update active section
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = navigationItems.map(item => 
+        document.getElementById(item.href.substring(1))
+      );
+      
+      const currentSection = sections.find(section => {
+        if (!section) return false;
+        const rect = section.getBoundingClientRect();
+        return rect.top <= 100 && rect.bottom >= 100;
+      });
+
+      if (currentSection) {
+        const sectionId = currentSection.id;
+        setActiveSection(sectionId);
+        
+        // Scroll the sidebar to keep the active link in view
+        const activeLink = sidebarRef.current?.querySelector(`a[href="#${sectionId}"]`);
+        if (activeLink && sidebarRef.current) {
+          const sidebarRect = sidebarRef.current.getBoundingClientRect();
+          const linkRect = activeLink.getBoundingClientRect();
+          
+          if (linkRect.top < sidebarRect.top || linkRect.bottom > sidebarRect.bottom) {
+            activeLink.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const pythonCode = `# Python code example
 import openai
 
@@ -120,86 +170,151 @@ response = client.chat.completions.create(
       </div>
 
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4">Getting Started</h2>
-          <p className="text-cepheus-gray-light mb-6">
-            Cepheus provides a drop-in replacement for OpenAI's API. If you're already using OpenAI's SDK, you can switch to Cepheus by simply changing the base URL and API key.
-          </p>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Mobile menu button */}
+          <button
+            className="lg:hidden fixed top-4 right-4 z-50 p-2 bg-cepheus-dark rounded-lg"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
+            {isSidebarOpen ? (
+              <X className="h-6 w-6 text-white" />
+            ) : (
+              <Menu className="h-6 w-6 text-white" />
+            )}
+          </button>
 
-          <Tabs defaultValue="python" className="mb-10">
-            <TabsList className="mb-4 bg-cepheus-dark border border-cepheus-gray-dark/30">
-              <TabsTrigger value="python" className="data-[state=active]:bg-cepheus-green data-[state=active]:text-black">
-                Python
-              </TabsTrigger>
-              <TabsTrigger value="javascript" className="data-[state=active]:bg-cepheus-green data-[state=active]:text-black">
-                JavaScript
-              </TabsTrigger>
-              <TabsTrigger value="curl" className="data-[state=active]:bg-cepheus-green data-[state=active]:text-black">
-                cURL
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="python">
-              <CodeBlock code={pythonCode} language="python" title="Python SDK Example" />
-            </TabsContent>
-            
-            <TabsContent value="javascript">
-              <CodeBlock code={javascriptCode} language="javascript" title="JavaScript SDK Example" />
-            </TabsContent>
-            
-            <TabsContent value="curl">
-              <CodeBlock code={curlCode} language="bash" title="cURL Example" />
-            </TabsContent>
-          </Tabs>
+          {/* Sidebar */}
+          <div
+            className={`fixed lg:static inset-0 z-40 transform ${
+              isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+            } lg:translate-x-0 transition-transform duration-200 ease-in-out`}
+          >
+            <div className="h-full w-64 bg-cepheus-dark p-6 lg:rounded-lg overflow-hidden flex flex-col">
+              <nav 
+                ref={sidebarRef}
+                className="space-y-2 overflow-y-auto flex-1 pr-2 scrollbar-thin scrollbar-thumb-cepheus-darker scrollbar-track-transparent"
+              >
+                {navigationItems.map((item) => {
+                  const sectionId = item.href.substring(1);
+                  const isActive = activeSection === sectionId;
+                  
+                  return (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      className={`block py-2 px-4 rounded-lg transition-colors ${
+                        isActive 
+                          ? "bg-cepheus-green text-black font-medium" 
+                          : "text-cepheus-gray-light hover:text-white hover:bg-cepheus-darker"
+                      }`}
+                      onClick={() => setIsSidebarOpen(false)}
+                    >
+                      {item.title}
+                    </a>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
 
-          <h2 className="text-2xl font-bold mb-4">Text Input and Output</h2>
-          <p className="text-cepheus-gray-light mb-6">
-            Cepheus supports text input and output in the same format as OpenAI's Chat Completions API. You can send messages to the API and receive responses in a conversational format.
-          </p>
-          
-          <h2 className="text-2xl font-bold mb-4 mt-10">Choosing a Model</h2>
-          <p className="text-cepheus-gray-light mb-6">
-            Cepheus supports 80+ models from various providers including OpenAI, Anthropic, Meta, Google, and more. You can specify which model to use in your API request.
-          </p>
-          <p className="text-cepheus-gray-light mb-6">
-            For reasoning-heavy tasks, we recommend using <code className="bg-cepheus-darker px-1 py-0.5 rounded text-cepheus-green">deepseek-ai/deepseek-r1</code>, which is optimized for complex reasoning and problem-solving.
-          </p>
-          
-          <h2 className="text-2xl font-bold mb-4 mt-10">Prompt Engineering</h2>
-          <p className="text-cepheus-gray-light mb-6">
-            Crafting effective prompts is crucial for getting the best results from any AI model. Here are some best practices:
-          </p>
-          <ul className="list-disc pl-6 text-cepheus-gray-light mb-6 space-y-2">
-            <li>Be specific and clear in your instructions</li>
-            <li>Provide context when necessary</li>
-            <li>Break complex tasks into smaller steps</li>
-            <li>Use examples to demonstrate the desired output format</li>
-            <li>Specify the tone, style, or perspective you want the model to adopt</li>
-          </ul>
-          
-          <h2 className="text-2xl font-bold mb-4 mt-10">Message Roles and Instruction Following</h2>
-          <p className="text-cepheus-gray-light mb-6">
-            Cepheus supports the same message roles as OpenAI's API: <code className="bg-cepheus-darker px-1 py-0.5 rounded text-cepheus-green">system</code>, <code className="bg-cepheus-darker px-1 py-0.5 rounded text-cepheus-green">user</code>, and <code className="bg-cepheus-darker px-1 py-0.5 rounded text-cepheus-green">assistant</code>.
-          </p>
-          <CodeBlock code={systemMessageExample} language="python" title="System Message Example" />
-          
-          <h2 className="text-2xl font-bold mb-4 mt-10">Message Formatting</h2>
-          <p className="text-cepheus-gray-light mb-6">
-            Most models support formatting in Markdown, which allows for rich text formatting, code blocks with syntax highlighting, tables, and more.
-          </p>
-          <CodeBlock code={formattedCodeExample} language="python" title="Code Formatting Example" />
-          
-          <h2 className="text-2xl font-bold mb-4 mt-10">Few-shot Learning</h2>
-          <p className="text-cepheus-gray-light mb-6">
-            Few-shot learning allows you to guide model behavior by providing examples in the conversation. This is especially useful for teaching the model to respond in a specific style or format.
-          </p>
-          <CodeBlock code={fewShotExample} language="python" title="Few-shot Learning Example" />
-          
-          <h2 className="text-2xl font-bold mb-4 mt-10">Include Relevant Context</h2>
-          <p className="text-cepheus-gray-light mb-6">
-            For tasks that require specific information, include the relevant context in your prompt to ensure accurate responses.
-          </p>
-          <CodeBlock code={contextExample} language="python" title="Including Context Example" />
+          {/* Main content */}
+          <div className="flex-1 max-w-4xl">
+            <div id="getting-started">
+              <h2 className="text-2xl font-bold mb-4">Getting Started</h2>
+              <p className="text-cepheus-gray-light mb-6">
+                Cepheus provides a drop-in replacement for OpenAI's API. If you're already using OpenAI's SDK, you can switch to Cepheus by simply changing the base URL and API key.
+              </p>
+
+              <Tabs defaultValue="python" className="mb-10">
+                <TabsList className="mb-4 bg-cepheus-dark border border-cepheus-gray-dark/30">
+                  <TabsTrigger value="python" className="data-[state=active]:bg-cepheus-green data-[state=active]:text-black">
+                    Python
+                  </TabsTrigger>
+                  <TabsTrigger value="javascript" className="data-[state=active]:bg-cepheus-green data-[state=active]:text-black">
+                    JavaScript
+                  </TabsTrigger>
+                  <TabsTrigger value="curl" className="data-[state=active]:bg-cepheus-green data-[state=active]:text-black">
+                    cURL
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="python">
+                  <CodeBlock code={pythonCode} language="python" title="Python SDK Example" />
+                </TabsContent>
+                
+                <TabsContent value="javascript">
+                  <CodeBlock code={javascriptCode} language="javascript" title="JavaScript SDK Example" />
+                </TabsContent>
+                
+                <TabsContent value="curl">
+                  <CodeBlock code={curlCode} language="bash" title="cURL Example" />
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            <div id="text-input-output">
+              <h2 className="text-2xl font-bold mb-4">Text Input and Output</h2>
+              <p className="text-cepheus-gray-light mb-6">
+                Cepheus supports text input and output in the same format as OpenAI's Chat Completions API. You can send messages to the API and receive responses in a conversational format.
+              </p>
+            </div>
+
+            <div id="choosing-model">
+              <h2 className="text-2xl font-bold mb-4">Choosing a Model</h2>
+              <p className="text-cepheus-gray-light mb-6">
+                Cepheus supports 80+ models from various providers including OpenAI, Anthropic, Meta, Google, and more. You can specify which model to use in your API request.
+              </p>
+              <p className="text-cepheus-gray-light mb-6">
+                For reasoning-heavy tasks, we recommend using <code className="bg-cepheus-darker px-1 py-0.5 rounded text-cepheus-green">deepseek-ai/deepseek-r1</code>, which is optimized for complex reasoning and problem-solving.
+              </p>
+            </div>
+
+            <div id="prompt-engineering">
+              <h2 className="text-2xl font-bold mb-4">Prompt Engineering</h2>
+              <p className="text-cepheus-gray-light mb-6">
+                Crafting effective prompts is crucial for getting the best results from any AI model. Here are some best practices:
+              </p>
+              <ul className="list-disc pl-6 text-cepheus-gray-light mb-6 space-y-2">
+                <li>Be specific and clear in your instructions</li>
+                <li>Provide context when necessary</li>
+                <li>Break complex tasks into smaller steps</li>
+                <li>Use examples to demonstrate the desired output format</li>
+                <li>Specify the tone, style, or perspective you want the model to adopt</li>
+              </ul>
+            </div>
+
+            <div id="message-roles">
+              <h2 className="text-2xl font-bold mb-4">Message Roles and Instruction Following</h2>
+              <p className="text-cepheus-gray-light mb-6">
+                Cepheus supports the same message roles as OpenAI's API: <code className="bg-cepheus-darker px-1 py-0.5 rounded text-cepheus-green">system</code>, <code className="bg-cepheus-darker px-1 py-0.5 rounded text-cepheus-green">user</code>, and <code className="bg-cepheus-darker px-1 py-0.5 rounded text-cepheus-green">assistant</code>.
+              </p>
+              <CodeBlock code={systemMessageExample} language="python" title="System Message Example" />
+            </div>
+
+            <div id="message-formatting">
+              <h2 className="text-2xl font-bold mb-4">Message Formatting</h2>
+              <p className="text-cepheus-gray-light mb-6">
+                Most models support formatting in Markdown, which allows for rich text formatting, code blocks with syntax highlighting, tables, and more.
+              </p>
+              <CodeBlock code={formattedCodeExample} language="python" title="Code Formatting Example" />
+            </div>
+
+            <div id="few-shot-learning">
+              <h2 className="text-2xl font-bold mb-4">Few-shot Learning</h2>
+              <p className="text-cepheus-gray-light mb-6">
+                Few-shot learning allows you to guide model behavior by providing examples in the conversation. This is especially useful for teaching the model to respond in a specific style or format.
+              </p>
+              <CodeBlock code={fewShotExample} language="python" title="Few-shot Learning Example" />
+            </div>
+
+            <div id="include-context">
+              <h2 className="text-2xl font-bold mb-4">Include Relevant Context</h2>
+              <p className="text-cepheus-gray-light mb-6">
+                For tasks that require specific information, include the relevant context in your prompt to ensure accurate responses.
+              </p>
+              <CodeBlock code={contextExample} language="python" title="Including Context Example" />
+            </div>
+          </div>
         </div>
       </div>
     </MainLayout>
