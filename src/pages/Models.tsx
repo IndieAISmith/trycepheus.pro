@@ -3,7 +3,7 @@ import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, ArrowUpDown, Info } from "lucide-react";
+import { Search, ArrowUpDown, Info, Sparkles, Code, Brain, Bot, Zap } from "lucide-react";
 
 const Models = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,20 +55,36 @@ const Models = () => {
     return 0;
   });
 
+  // Get icon based on model category
+  const getModelIcon = (category: string) => {
+    switch (category.toLowerCase()) {
+      case 'gpt':
+        return <Brain className="h-5 w-5" />;
+      case 'llama':
+        return <Sparkles className="h-5 w-5" />;
+      case 'gemini':
+        return <Bot className="h-5 w-5" />;
+      case 'claude':
+        return <Zap className="h-5 w-5" />;
+      default:
+        return <Code className="h-5 w-5" />;
+    }
+  };
+
   return (
     <MainLayout>
-      <div className="bg-cepheus-darker py-16">
+      <div className="bg-cepheus-darker py-8 sm:py-12 lg:py-16">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-4 text-center">Available Models</h1>
-          <p className="text-xl text-cepheus-gray-light max-w-3xl mx-auto text-center mb-8">
-            Access 80+ cutting-edge AI models through our unified API
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-center">Available Models</h1>
+          <p className="text-lg sm:text-xl text-cepheus-gray-light max-w-3xl mx-auto text-center mb-8">
+            Access {allModels.length}+ cutting-edge AI models through our unified API
           </p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-12">
-        <div className="mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full md:w-1/3">
+      <div className="container mx-auto px-4 py-8 sm:py-12">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="relative w-full sm:w-1/2 lg:w-1/3">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cepheus-gray" size={18} />
             <Input
               type="text"
@@ -81,7 +97,7 @@ const Models = () => {
           
           <Button 
             variant="outline" 
-            className="border-cepheus-gray-dark/50"
+            className="w-full sm:w-auto border-cepheus-gray-dark/50"
             onClick={() => setSortOrder(sortOrder === "provider" ? "name" : "provider")}
           >
             <ArrowUpDown className="mr-2 h-4 w-4" />
@@ -89,31 +105,32 @@ const Models = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {sortedModels.map((model, index) => (
             <div 
               key={index} 
-              className="rounded-lg border border-cepheus-gray-dark/30 bg-cepheus-darker p-6 hover:border-cepheus-green/50 transition-all"
+              className="rounded-lg border border-cepheus-gray-dark/30 bg-cepheus-darker p-4 sm:p-6 hover:border-cepheus-green/50 transition-all group"
             >
               <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-white truncate" title={model.name}>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-white truncate" title={model.name}>
                     {model.name}
                   </h3>
-                  <p className="text-cepheus-green text-sm">{model.provider}</p>
+                  <p className="text-cepheus-green text-sm truncate">{model.provider}</p>
                 </div>
-                <span className="px-2 py-1 bg-cepheus-dark rounded text-xs text-cepheus-gray">
+                <span className="flex items-center gap-1.5 ml-2 px-2 py-1 bg-cepheus-dark rounded text-xs text-cepheus-gray shrink-0">
+                  {getModelIcon(model.category)}
                   {model.category}
                 </span>
               </div>
               
               <div className="mt-4 pt-4 border-t border-cepheus-gray-dark/30 flex items-center justify-between">
-                <Button variant="link" className="p-0 h-auto text-cepheus-gray-light hover:text-cepheus-green text-sm">
+                <Button variant="link" className="p-0 h-auto text-cepheus-gray-light hover:text-cepheus-green text-xs sm:text-sm">
                   <Info className="h-4 w-4 mr-1" />
                   View details
                 </Button>
                 
-                <Button variant="link" className="p-0 h-auto text-cepheus-green hover:text-cepheus-green-light text-sm">
+                <Button variant="link" className="p-0 h-auto text-cepheus-green hover:text-cepheus-green-light text-xs sm:text-sm">
                   Sample prompt
                 </Button>
               </div>
@@ -123,7 +140,7 @@ const Models = () => {
 
         <div className="mt-8 text-center">
           <p className="text-cepheus-gray mb-2">Displaying {sortedModels.length} models</p>
-          <p className="text-cepheus-gray-light">
+          <p className="text-cepheus-gray-light text-sm sm:text-base">
             Need a specific model not listed here? <a href="#" className="text-cepheus-green hover:underline">Contact us</a> for custom integrations.
           </p>
         </div>
