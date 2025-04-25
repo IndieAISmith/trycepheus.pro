@@ -1,6 +1,5 @@
 
 import MainLayout from "@/components/layout/MainLayout";
-import HeroSection from "@/components/home/HeroSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import ProblemSolutionSection from "@/components/home/ProblemSolutionSection";
 import CodeExampleSection from "@/components/home/CodeExampleSection";
@@ -13,8 +12,7 @@ import OnboardingSection from "@/components/home/OnboardingSection";
 
 const Index = () => {
   return (
-    <MainLayout>
-      <HeroSection />
+    <MainLayout useGeometricHeader={true}>
       <FeaturesSection />
       <ProblemSolutionSection />
       <CodeExampleSection />

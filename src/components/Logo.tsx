@@ -1,4 +1,3 @@
-import React from 'react';
 
 interface LogoProps {
   className?: string;
@@ -7,16 +6,20 @@ interface LogoProps {
 
 export const Logo: React.FC<LogoProps> = ({ className = '', size = 'md' }) => {
   const sizes = {
-    sm: 'text-lg',
-    md: 'text-xl',
-    lg: 'text-2xl',
+    sm: 'h-12',
+    md: 'h-14',
+    lg: 'h-16',
   };
 
   return (
     <div className={`flex items-center ${className}`}>
-      <span className={`text-green-500 font-semibold ${sizes[size]}`}>Cepheus</span>
+      <img 
+        src="/cepheus-logo.svg" 
+        alt="Cepheus Logo" 
+        className={`${sizes[size]}`}
+      />
     </div>
   );
 };
 
-export default Logo; 
+export default Logo;

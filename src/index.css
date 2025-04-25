@@ -87,6 +87,75 @@
     @apply font-mono text-sm;
   }
 
+  /* Markdown content styling */
+  .markdown-content, .markdown-text {
+    @apply text-sm leading-relaxed;
+  }
+
+  .markdown-content p, .markdown-text p {
+    @apply mb-4 last:mb-0 text-cepheus-gray-light;
+  }
+
+  .markdown-content ul, .markdown-text ul {
+    @apply list-disc pl-6 mb-4 last:mb-0;
+  }
+
+  .markdown-content ol, .markdown-text ol {
+    @apply list-decimal pl-6 mb-4 last:mb-0;
+  }
+
+  .markdown-content li, .markdown-text li {
+    @apply mb-1 text-cepheus-gray-light;
+  }
+
+  .markdown-content h1, .markdown-text h1 {
+    @apply text-3xl font-bold mb-4 mt-8 text-white;
+  }
+
+  .markdown-content h2, .markdown-text h2 {
+    @apply text-2xl font-bold mb-3 mt-6 text-white;
+  }
+
+  .markdown-content h3, .markdown-text h3 {
+    @apply text-xl font-bold mb-2 mt-5 text-white;
+  }
+
+  .markdown-content blockquote, .markdown-text blockquote {
+    @apply border-l-4 border-cepheus-green pl-4 italic my-4;
+  }
+
+  .markdown-content a, .markdown-text a {
+    @apply text-cepheus-green hover:underline;
+  }
+
+  .markdown-content table, .markdown-text table {
+    @apply border-collapse border border-gray-700 my-4 w-full;
+  }
+
+  .markdown-content th, .markdown-text th {
+    @apply border border-gray-700 px-4 py-2 bg-gray-800;
+  }
+
+  .markdown-content td, .markdown-text td {
+    @apply border border-gray-700 px-4 py-2;
+  }
+
+  .markdown-content img, .markdown-text img {
+    @apply max-w-full h-auto rounded-md my-4;
+  }
+
+  .markdown-content hr, .markdown-text hr {
+    @apply my-6 border-gray-700;
+  }
+
+  .markdown-text code {
+    @apply bg-cepheus-darker px-1 py-0.5 rounded text-cepheus-green;
+  }
+
+  .markdown-text strong {
+    @apply font-bold text-white;
+  }
+
   /* Gradient text */
   .gradient-text {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-cepheus-green to-cepheus-accent;

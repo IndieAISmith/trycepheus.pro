@@ -1,73 +1,220 @@
-# Welcome to your Lovable project
+<div align="center">
+  <img src="/public/cepheus-logo.svg" alt="Cepheus Logo" width="300"/>
+  <h1>Cepheus - OpenAI-Compatible API Gateway</h1>
+  <p>
+    <strong>Your Universal Gateway to 80+ Advanced AI Models</strong>
+  </p>
+  <p>
+    <a href="https://cepheus-x.vercel.app/docs">Documentation</a> •
+    <a href="https://cepheus-x.vercel.app/models">Models</a> •
+    <a href="https://cepheus-x.vercel.app/cookbook">Cookbook</a> •
+    <a href="https://cepheus-x.vercel.app/playground">Playground</a>
+  </p>
+</div>
 
-## Project info
+## 🚀 Overview
 
-**URL**: https://lovable.dev/projects/e00599c2-8d28-42aa-b02f-7bbf1ec8b8de
+Cepheus revolutionizes AI integration by providing a unified, OpenAI-compatible API gateway to access 80+ cutting-edge AI models. Whether you're building the next breakthrough application or enhancing existing systems, Cepheus simplifies AI integration while giving you unprecedented model choice and flexibility.
 
-## How can I edit this code?
+### ✨ Key Features
 
-There are several ways of editing your application.
+- **OpenAI-Compatible API**: Seamless migration - just change the base URL and API key
+- **80+ AI Models**: Unified access to models from industry leaders
+- **Real-time Model Updates**: Automatic access to the latest model versions
+- **Developer-First Design**: Built by developers, for developers
+- **Free Beta Access**: 20 requests per minute, no credit card required
 
-**Use Lovable**
+## 🎯 Available Models
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/e00599c2-8d28-42aa-b02f-7bbf1ec8b8de) and start prompting.
+### Featured Models
 
-Changes made via Lovable will be committed automatically to this repo.
+- **GPT Series**
+  - `gpt-4o-2024-11-20`: Advanced reasoning, multimodal support
+  - `gpt-4o-mini-2024-07-18`: Lightweight, cost-effective variant
+  - `gpt-search-realtime`: Real-time information retrieval
 
-**Use your preferred IDE**
+- **Claude Series**
+  - `anthropic/claude-3-7-sonnet-latest`: Enhanced reasoning capabilities
+  - `anthropic/claude-3-7-sonnet-20250219`: Consistent, reproducible results
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Llama Series**
+  - `meta/llama-3.3-70b-versatile`: 70B parameter model for versatile tasks
+  - `meta/llama3-70b-8192`: Extended 8192 token context window
+  - `meta/llama-3.3-70b-specdec`: Speculative decoding for improved speed
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Specialized Models**
+  - `qwen/qwen-2.5-coder-32b`: Specialized for code generation
+  - `deepseek/deepseek-r1`: Advanced reasoning and problem-solving
+  - `o1-mini-2024-09-12`: Optimized for developer workflows
 
-Follow these steps:
+## 🔧 Integration Examples
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Python
+```python
+import openai
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+client = openai.OpenAI(
+    base_url="https://cepheus-x.vercel.app/v1/",
+    api_key="sk-efghijkl5678mnopabcd1234efghijkl5678mnop"
+)
 
-# Step 3: Install the necessary dependencies.
-npm i
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{
+        "role": "user",
+        "content": "Hello from Cepheus!"
+    }]
+)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+print(response.choices[0].message.content)
 ```
 
-**Edit a file directly in GitHub**
+### JavaScript/TypeScript
+```javascript
+import OpenAI from 'openai';
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+const openai = new OpenAI({
+  baseURL: 'https://cepheus-x.vercel.app/v1/',
+  apiKey: 'sk-efghijkl5678mnopabcd1234efghijkl5678mnop',
+  dangerouslyAllowBrowser: true,
+});
 
-**Use GitHub Codespaces**
+async function main() {
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      {
+        role: 'user',
+        content: 'Hello from Cepheus!',
+      },
+    ],
+  });
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+  console.log(response.choices[0].message.content);
+}
+```
 
-## What technologies are used for this project?
+### cURL
+```bash
+curl https://cepheus-x.vercel.app/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-efghijkl5678mnopabcd1234efghijkl5678mnop" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello from Cepheus!"
+      }
+    ]
+  }'
+```
 
-This project is built with:
+## 🛡️ Enterprise Features
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Hallucination Prevention
+```python
+def check_for_hallucination(response, facts):
+    hallucination_detected = False
+    explanation = ""
+    
+    for fact in facts:
+        if fact["check_type"] == "should_contain" and fact["key"] not in response:
+            hallucination_detected = True
+            explanation += f"Response is missing key information: {fact['key']}\n"
+    
+    return hallucination_detected, explanation
+```
 
-## How can I deploy this project?
+### Advanced Features
+- **Context Window Management**: Support for extended context windows up to 8192 tokens
+- **System Messages**: Fine-tune model behavior with system-level instructions
+- **Rate Limit Handling**: Built-in retry logic and batch processing
+- **Error Handling**: Comprehensive error detection and recovery
+- **Response Validation**: Automatic fact-checking and hallucination detection
 
-Simply open [Lovable](https://lovable.dev/projects/e00599c2-8d28-42aa-b02f-7bbf1ec8b8de) and click on Share -> Publish.
+## 📚 Documentation & Resources
 
-## Can I connect a custom domain to my Lovable project?
+### Interactive Tools
+- **[Playground](/playground)**: Test models in real-time
+- **[Model Explorer](/models)**: Compare and select models
+- **[Cookbook](/cookbook)**: Implementation recipes and patterns
 
-Yes, you can!
+### Learning Resources
+- Comprehensive API documentation
+- Integration guides for popular frameworks
+- Best practices for AI implementation
+- Performance optimization tips
+- Security guidelines
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🎯 Use Cases
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Development
+- Rapid prototyping
+- Code generation and review
+- Technical documentation
+- Debug assistance
+
+### Enterprise
+- Content generation
+- Data analysis
+- Customer support automation
+- Process optimization
+
+### Research
+- Model comparison
+- Performance benchmarking
+- AI capability testing
+- Research paper analysis
+
+## 🔒 Security & Compliance
+
+- **Data Privacy**: No data retention beyond processing
+- **API Security**: Industry-standard encryption
+- **Access Control**: Fine-grained permissions
+- **Audit Logging**: Comprehensive request tracking
+- **Compliance**: GDPR and CCPA ready
+
+## 🚀 Getting Started
+
+1. **Sign Up**
+   - Visit [cepheus-x.vercel.app](https://cepheus-x.vercel.app)
+   - Get API key instantly
+
+2. **Quick Integration**
+   - Update base URL in existing code
+   - Insert new API key
+   - Start making requests
+
+3. **Explore & Scale**
+   - Test different models
+   - Monitor usage in dashboard
+   - Upgrade as needed
+
+## 💡 Why Choose Cepheus?
+
+- **Flexibility**: Switch between models without code changes
+- **Cost-Effective**: Pay only for what you use
+- **Future-Proof**: Automatic access to new models
+- **Developer-Centric**: Built for developer productivity
+- **Reliable**: Enterprise-grade infrastructure
+
+## 🤝 Community & Support
+
+- Active Discord community
+- Regular office hours
+- Priority enterprise support
+- Comprehensive documentation
+- Regular webinars and tutorials
+
+## 📬 Contact
+
+- **API Website**: [cepheus-x.vercel.app](https://cepheus-x.vercel.app)
+- **Documentation**: [cepheus-x.vercel.app/docs](https://cepheus-x.vercel.app/docs)
+---
+
+<div align="center">
+  <p><strong>Start Building with Cepheus Today</strong></p>
+  <p>Free during beta • 20 requests per minute • No credit card required</p>
+  <p>Powering the next generation of AI applications</p>
+</div>

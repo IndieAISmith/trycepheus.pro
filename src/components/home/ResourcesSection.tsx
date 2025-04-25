@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { BookOpen, Code, Cpu, FileText } from "lucide-react";
+import { BookOpen, Code, Cpu } from "lucide-react";
 
 interface ResourceCardProps {
   icon: React.ElementType;
@@ -39,13 +39,7 @@ const ResourcesSection = () => {
       link: "/cookbook",
       linkText: "Explore recipes"
     },
-    {
-      icon: FileText,
-      title: "Prompt Engineering",
-      description: "Learn how to craft effective prompts for better AI outputs.",
-      link: "/prompt-engineering",
-      linkText: "Master prompting"
-    },
+
     {
       icon: Cpu,
       title: "Models Library",
@@ -66,7 +60,7 @@ const ResourcesSection = () => {
             Everything you need to get started with Cepheus
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {resources.map((resource, index) => (
             <ResourceCard

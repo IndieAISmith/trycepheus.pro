@@ -100,8 +100,59 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
+			},
+			typography: {
+				DEFAULT: {
+					css: {
+						maxWidth: '100%',
+						color: '#CBD5E1',
+						a: {
+							color: '#4ADE80',
+							'&:hover': {
+								color: '#86efac',
+							},
+						},
+						strong: {
+							color: '#CBD5E1',
+						},
+						h1: {
+							color: '#FFFFFF',
+						},
+						h2: {
+							color: '#FFFFFF',
+						},
+						h3: {
+							color: '#FFFFFF',
+						},
+						h4: {
+							color: '#FFFFFF',
+						},
+						code: {
+							color: '#86efac',
+							backgroundColor: '#060A0F',
+							padding: '0.2em 0.4em',
+							borderRadius: '0.25rem',
+						},
+						'code::before': {
+							content: '""',
+						},
+						'code::after': {
+							content: '""',
+						},
+						pre: {
+							backgroundColor: '#060A0F',
+							color: '#CBD5E1',
+							borderColor: '#64748B',
+							border: 'none', // Remove default border from prose
+						},
+						blockquote: {
+							color: '#94A3B8',
+							borderLeftColor: '#4ADE80',
+						},
+					},
+				},
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config;

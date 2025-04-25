@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Github, Twitter, Linkedin } from "lucide-react";
 
+
 const Footer = () => {
   return (
     <footer className="border-t border-cepheus-gray-dark/30 bg-cepheus-darker pt-8 sm:pt-12 pb-6 sm:pb-8">
@@ -8,8 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center">
-              <span className="text-xl sm:text-2xl font-bold text-cepheus-green">Cepheus</span>
-            </Link>
+            <img  src="/cepheus-logo.svg"  alt="Cepheus Logo" className="h-10"/>         </Link>
             <p className="mt-2 text-gray-400 text-sm">
               Free OpenAI-compatible APIs with 20 RPM rate limits during beta.
             </p>

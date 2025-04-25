@@ -1,24 +1,93 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, ArrowUpDown, Info, Sparkles, Code, Brain, Bot, Zap } from "lucide-react";
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
+import { Search, Info, Sparkles, Code, Brain, Bot, Zap, RefreshCw, Loader2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import OpenAI from "openai";
+import { toast } from "@/components/ui/sonner";
+
+// Custom fetch implementation to avoid OPTIONS preflight requests
+const customFetch = async (url: RequestInfo | URL, init?: RequestInit) => {
+  // Modify the request to avoid triggering CORS preflight
+  const modifiedInit: RequestInit = {
+    ...init,
+    headers: {
+      ...init?.headers,
+      // Add headers that don't trigger preflight
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    // Use 'GET' for simple requests when possible to avoid preflight
+    // Only modify if it's a POST that would trigger preflight
+    method: init?.method === 'POST' && !init?.body ? 'GET' : init?.method,
+  };
+
+  return fetch(url, modifiedInit);
+};
+
+// Create OpenAI client instance
+const openai = new OpenAI({
+  baseURL: "https://cepheus-x.vercel.app/v1/",
+  apiKey: "sk-efghijkl5678mnopabcd1234efghijkl5678mnop",
+  dangerouslyAllowBrowser: true, // Required for client-side usage
+  timeout: 30000, // 30 seconds timeout
+  maxRetries: 3, // Retry failed requests up to 3 times
+  defaultHeaders: {
+    // Add headers to prevent CORS preflight OPTIONS requests
+    "Content-Type": "application/json",
+    "X-Skip-Preflight": "true"
+  },
+  defaultQuery: {
+    // Add query parameter to signal no preflight needed
+    skipOptions: "true"
+  },
+  fetch: customFetch
+});
+
+// Fallback list of models in case API call fails
+const fallbackModels = [
+  "gpt-4o-2024-11-20","gpt-4o-mini-2024-07-18","o1-mini-2024-09-12","gpt-search-realtime",
+  "uncensored-gpt-exp-35290","meta/llama-3.3-70b-versatile","meta/llama-4-scout-17b-16e-instruct",
+  "google/gemini-2.0-flash","google/gemini-2.0-flash-thinking-exp-01-21","mistralai/mistral-nemo",
+  "mistralai/mistral-large-uncensored","deepseek/deepseek-r1","deepseek/deepseek-r1-distill-qwen-32b",
+  "deepseek/deepseek-r1-distill-llama-70b","qwen/qwen-2.5-32b-coder","qwen/qwen-qwq-32b",
+  "microsoft/phi-4","gpt-4.5-preview-2025-02-27","chatgpt-4o-latest","gpt-4o-search-preview",
+  "o1-2024-12-17","o3-mini-2025-01-31","anthropic/claude-3-5-sonnet-latest","anthropic/claude-3-5-haiku-latest",
+  "anthropic/claude-3-7-sonnet-latest","anthropic/claude-3-7-sonnet-20250219","deepseek-ai/deepseek-r1"
+];
+
+// Interface for model data
+interface ModelData {
+  name: string;
+  provider: string;
+  category: string;
+  features: string[];
+  isAvailable?: boolean;
+}
+
+// Interface for stored models in localStorage
+interface StoredModels {
+  timestamp: number;
+  models: string[];
+}
 
 const Models = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState("provider");
-  
+  const [sortOrder, setSortOrder] = useState("availability");
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [fetchedModelNames, setFetchedModelNames] = useState<string[]>([]);
+
   // Complete list of models with features
   const allModels = [
-    { 
-      name: "gpt-4o-2024-11-20", 
-      provider: "OpenAI", 
+    {
+      name: "gpt-4o-2024-11-20",
+      provider: "OpenAI",
       category: "GPT",
       features: [
         "Advanced reasoning capabilities",
@@ -26,9 +95,9 @@ const Models = () => {
         "High accuracy on complex tasks"
       ]
     },
-    { 
-      name: "gpt-4o-mini-2024-07-18", 
-      provider: "OpenAI", 
+    {
+      name: "gpt-4o-mini-2024-07-18",
+      provider: "OpenAI",
       category: "GPT",
       features: [
         "Lightweight version of GPT-4o",
@@ -36,9 +105,9 @@ const Models = () => {
         "Cost-effective for simpler tasks"
       ]
     },
-    { 
-      name: "o1-mini-2024-09-12", 
-      provider: "OpenAI", 
+    {
+      name: "o1-mini-2024-09-12",
+      provider: "OpenAI",
       category: "O1",
       features: [
         "Specialized for code generation",
@@ -46,9 +115,9 @@ const Models = () => {
         "Supports multiple programming languages"
       ]
     },
-    { 
-      name: "gpt-search-realtime", 
-      provider: "OpenAI", 
+    {
+      name: "gpt-search-realtime",
+      provider: "OpenAI",
       category: "GPT",
       features: [
         "Real-time information retrieval",
@@ -56,9 +125,9 @@ const Models = () => {
         "Factual accuracy with citations"
       ]
     },
-    { 
-      name: "uncensored-gpt-exp-35290", 
-      provider: "OpenAI", 
+    {
+      name: "uncensored-gpt-exp-35290",
+      provider: "OpenAI",
       category: "GPT",
       features: [
         "Less restricted content generation",
@@ -66,9 +135,9 @@ const Models = () => {
         "Alternative perspectives"
       ]
     },
-    { 
-      name: "meta/llama-3.3-70b-versatile", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.3-70b-versatile",
+      provider: "Meta",
       category: "Llama",
       features: [
         "70 billion parameter model",
@@ -76,9 +145,9 @@ const Models = () => {
         "Strong reasoning capabilities"
       ]
     },
-    { 
-      name: "meta/llama-4-scout-17b-16e-instruct", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-4-scout-17b-16e-instruct",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Instruction-tuned for better following",
@@ -86,9 +155,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "google/gemini-2.0-flash", 
-      provider: "Google", 
+    {
+      name: "google/gemini-2.0-flash",
+      provider: "Google",
       category: "Gemini",
       features: [
         "Ultra-fast inference speed",
@@ -96,9 +165,9 @@ const Models = () => {
         "Efficient resource utilization"
       ]
     },
-    { 
-      name: "google/gemini-2.0-flash-thinking-exp-01-21", 
-      provider: "Google", 
+    {
+      name: "google/gemini-2.0-flash-thinking-exp-01-21",
+      provider: "Google",
       category: "Gemini",
       features: [
         "Enhanced reasoning capabilities",
@@ -106,9 +175,9 @@ const Models = () => {
         "Improved problem-solving skills"
       ]
     },
-    { 
-      name: "mistralai/mistral-nemo", 
-      provider: "MistralAI", 
+    {
+      name: "mistralai/mistral-nemo",
+      provider: "MistralAI",
       category: "Mistral",
       features: [
         "Specialized for reasoning tasks",
@@ -116,9 +185,9 @@ const Models = () => {
         "Clear and concise outputs"
       ]
     },
-    { 
-      name: "mistralai/mistral-large-uncensored", 
-      provider: "MistralAI", 
+    {
+      name: "mistralai/mistral-large-uncensored",
+      provider: "MistralAI",
       category: "Mistral",
       features: [
         "Less restricted content generation",
@@ -126,9 +195,9 @@ const Models = () => {
         "Alternative perspectives"
       ]
     },
-    { 
-      name: "deepseek/deepseek-r1", 
-      provider: "DeepSeek", 
+    {
+      name: "deepseek/deepseek-r1",
+      provider: "DeepSeek",
       category: "DeepSeek",
       features: [
         "Advanced reasoning capabilities",
@@ -136,9 +205,9 @@ const Models = () => {
         "High accuracy on complex tasks"
       ]
     },
-    { 
-      name: "deepseek/deepseek-r1-distill-qwen-32b", 
-      provider: "DeepSeek", 
+    {
+      name: "deepseek/deepseek-r1-distill-qwen-32b",
+      provider: "DeepSeek",
       category: "DeepSeek",
       features: [
         "Distilled from larger models",
@@ -146,9 +215,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "deepseek/deepseek-r1-distill-llama-70b", 
-      provider: "DeepSeek", 
+    {
+      name: "deepseek/deepseek-r1-distill-llama-70b",
+      provider: "DeepSeek",
       category: "DeepSeek",
       features: [
         "Distilled from Llama 70B",
@@ -156,9 +225,9 @@ const Models = () => {
         "Strong reasoning capabilities"
       ]
     },
-    { 
-      name: "qwen/qwen-2.5-32b-coder", 
-      provider: "Qwen", 
+    {
+      name: "qwen/qwen-2.5-32b-coder",
+      provider: "Qwen",
       category: "Qwen",
       features: [
         "Specialized for code generation",
@@ -166,9 +235,9 @@ const Models = () => {
         "Strong code understanding"
       ]
     },
-    { 
-      name: "qwen/qwen-qwq-32b", 
-      provider: "Qwen", 
+    {
+      name: "qwen/qwen-qwq-32b",
+      provider: "Qwen",
       category: "Qwen",
       features: [
         "Specialized model for specific tasks",
@@ -176,9 +245,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "microsoft/phi-4", 
-      provider: "Microsoft", 
+    {
+      name: "microsoft/phi-4",
+      provider: "Microsoft",
       category: "Phi",
       features: [
         "Small but powerful model",
@@ -186,9 +255,9 @@ const Models = () => {
         "Strong reasoning capabilities"
       ]
     },
-    { 
-      name: "gpt-4.5-preview-2025-02-27", 
-      provider: "OpenAI", 
+    {
+      name: "gpt-4.5-preview-2025-02-27",
+      provider: "OpenAI",
       category: "GPT",
       features: [
         "Preview of upcoming GPT-4.5",
@@ -196,9 +265,9 @@ const Models = () => {
         "Early access to new features"
       ]
     },
-    { 
-      name: "chatgpt-4o-latest", 
-      provider: "OpenAI", 
+    {
+      name: "chatgpt-4o-latest",
+      provider: "OpenAI",
       category: "GPT",
       features: [
         "Latest version of ChatGPT-4o",
@@ -206,9 +275,9 @@ const Models = () => {
         "Consistent performance"
       ]
     },
-    { 
-      name: "gpt-4o-search-preview", 
-      provider: "OpenAI", 
+    {
+      name: "gpt-4o-search-preview",
+      provider: "OpenAI",
       category: "GPT",
       features: [
         "Preview of search capabilities",
@@ -216,9 +285,9 @@ const Models = () => {
         "Factual accuracy with citations"
       ]
     },
-    { 
-      name: "o1-2024-12-17", 
-      provider: "OpenAI", 
+    {
+      name: "o1-2024-12-17",
+      provider: "OpenAI",
       category: "O1",
       features: [
         "Specialized for code generation",
@@ -226,9 +295,9 @@ const Models = () => {
         "Supports multiple programming languages"
       ]
     },
-    { 
-      name: "o3-mini-2025-01-31", 
-      provider: "OpenAI", 
+    {
+      name: "o3-mini-2025-01-31",
+      provider: "OpenAI",
       category: "O3",
       features: [
         "Lightweight version of O3",
@@ -236,9 +305,9 @@ const Models = () => {
         "Cost-effective for simpler tasks"
       ]
     },
-    { 
-      name: "anthropic/claude-3-5-sonnet-latest", 
-      provider: "Anthropic", 
+    {
+      name: "anthropic/claude-3-5-sonnet-latest",
+      provider: "Anthropic",
       category: "Claude",
       features: [
         "Latest Claude 3.5 Sonnet model",
@@ -246,9 +315,9 @@ const Models = () => {
         "Clear and concise outputs"
       ]
     },
-    { 
-      name: "anthropic/claude-3-5-haiku-latest", 
-      provider: "Anthropic", 
+    {
+      name: "anthropic/claude-3-5-haiku-latest",
+      provider: "Anthropic",
       category: "Claude",
       features: [
         "Lightweight Claude 3.5 model",
@@ -256,9 +325,9 @@ const Models = () => {
         "Cost-effective for simpler tasks"
       ]
     },
-    { 
-      name: "anthropic/claude-3-7-sonnet-latest", 
-      provider: "Anthropic", 
+    {
+      name: "anthropic/claude-3-7-sonnet-latest",
+      provider: "Anthropic",
       category: "Claude",
       features: [
         "Latest Claude 3.7 Sonnet model",
@@ -266,9 +335,9 @@ const Models = () => {
         "Improved problem-solving skills"
       ]
     },
-    { 
-      name: "anthropic/claude-3-7-sonnet-20250219", 
-      provider: "Anthropic", 
+    {
+      name: "anthropic/claude-3-7-sonnet-20250219",
+      provider: "Anthropic",
       category: "Claude",
       features: [
         "Specific version of Claude 3.7",
@@ -276,9 +345,9 @@ const Models = () => {
         "Reproducible results"
       ]
     },
-    { 
-      name: "deepseek-ai/deepseek-r1", 
-      provider: "DeepSeek AI", 
+    {
+      name: "deepseek-ai/deepseek-r1",
+      provider: "DeepSeek AI",
       category: "DeepSeek",
       features: [
         "Advanced reasoning capabilities",
@@ -286,9 +355,9 @@ const Models = () => {
         "High accuracy on complex tasks"
       ]
     },
-    { 
-      name: "deepseek-ai/deepseek-r1-groq", 
-      provider: "DeepSeek AI", 
+    {
+      name: "deepseek-ai/deepseek-r1-groq",
+      provider: "DeepSeek AI",
       category: "DeepSeek",
       features: [
         "Optimized for Groq hardware",
@@ -296,9 +365,9 @@ const Models = () => {
         "Efficient resource utilization"
       ]
     },
-    { 
-      name: "deepseek-ai/deepseek-v3", 
-      provider: "DeepSeek AI", 
+    {
+      name: "deepseek-ai/deepseek-v3",
+      provider: "DeepSeek AI",
       category: "DeepSeek",
       features: [
         "Latest DeepSeek model",
@@ -306,9 +375,9 @@ const Models = () => {
         "Improved performance"
       ]
     },
-    { 
-      name: "deepseek-ai/deepseek-v3-0324", 
-      provider: "DeepSeek AI", 
+    {
+      name: "deepseek-ai/deepseek-v3-0324",
+      provider: "DeepSeek AI",
       category: "DeepSeek",
       features: [
         "Specific version of DeepSeek v3",
@@ -316,9 +385,9 @@ const Models = () => {
         "Reproducible results"
       ]
     },
-    { 
-      name: "google/gemini-1.5-flash", 
-      provider: "Google", 
+    {
+      name: "google/gemini-1.5-flash",
+      provider: "Google",
       category: "Gemini",
       features: [
         "Ultra-fast inference speed",
@@ -326,9 +395,9 @@ const Models = () => {
         "Efficient resource utilization"
       ]
     },
-    { 
-      name: "google/gemini-1.5-pro", 
-      provider: "Google", 
+    {
+      name: "google/gemini-1.5-pro",
+      provider: "Google",
       category: "Gemini",
       features: [
         "Professional-grade capabilities",
@@ -336,9 +405,9 @@ const Models = () => {
         "High accuracy on complex tasks"
       ]
     },
-    { 
-      name: "google/gemini-2.0-pro", 
-      provider: "Google", 
+    {
+      name: "google/gemini-2.0-pro",
+      provider: "Google",
       category: "Gemini",
       features: [
         "Professional-grade capabilities",
@@ -346,9 +415,9 @@ const Models = () => {
         "Improved performance"
       ]
     },
-    { 
-      name: "google/gemini-2.5-pro-preview-03-25", 
-      provider: "Google", 
+    {
+      name: "google/gemini-2.5-pro-preview-03-25",
+      provider: "Google",
       category: "Gemini",
       features: [
         "Preview of upcoming Gemini 2.5",
@@ -356,9 +425,9 @@ const Models = () => {
         "Early access to new features"
       ]
     },
-    { 
-      name: "mistralai/mistral-large", 
-      provider: "MistralAI", 
+    {
+      name: "mistralai/mistral-large",
+      provider: "MistralAI",
       category: "Mistral",
       features: [
         "Large-scale model",
@@ -366,9 +435,9 @@ const Models = () => {
         "High accuracy on complex tasks"
       ]
     },
-    { 
-      name: "meta/llama-3.1-405b-versatile", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.1-405b-versatile",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Massive 405B parameter model",
@@ -376,9 +445,9 @@ const Models = () => {
         "State-of-the-art performance"
       ]
     },
-    { 
-      name: "meta/llama-3.3-70b-instruct-fp8-fast", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.3-70b-instruct-fp8-fast",
+      provider: "Meta",
       category: "Llama",
       features: [
         "FP8 quantization for speed",
@@ -386,9 +455,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "qwen/qwen-max", 
-      provider: "Qwen", 
+    {
+      name: "qwen/qwen-max",
+      provider: "Qwen",
       category: "Qwen",
       features: [
         "Largest Qwen model",
@@ -396,9 +465,9 @@ const Models = () => {
         "State-of-the-art performance"
       ]
     },
-    { 
-      name: "qwen/qwen-plus", 
-      provider: "Qwen", 
+    {
+      name: "qwen/qwen-plus",
+      provider: "Qwen",
       category: "Qwen",
       features: [
         "Enhanced Qwen model",
@@ -406,9 +475,9 @@ const Models = () => {
         "Improved performance"
       ]
     },
-    { 
-      name: "qwen/qwen-turbo", 
-      provider: "Qwen", 
+    {
+      name: "qwen/qwen-turbo",
+      provider: "Qwen",
       category: "Qwen",
       features: [
         "Ultra-fast inference speed",
@@ -416,9 +485,9 @@ const Models = () => {
         "Efficient resource utilization"
       ]
     },
-    { 
-      name: "qwen/qwq-plus", 
-      provider: "Qwen", 
+    {
+      name: "qwen/qwq-plus",
+      provider: "Qwen",
       category: "Qwen",
       features: [
         "Enhanced QWQ model",
@@ -426,9 +495,9 @@ const Models = () => {
         "Improved performance"
       ]
     },
-    { 
-      name: "x-ai/grok-2-1212", 
-      provider: "x-ai", 
+    {
+      name: "x-ai/grok-2-1212",
+      provider: "x-ai",
       category: "Grok",
       features: [
         "Latest Grok model",
@@ -436,9 +505,9 @@ const Models = () => {
         "Improved performance"
       ]
     },
-    { 
-      name: "deepseek-ai/deepseek-r1-turbo", 
-      provider: "DeepSeek AI", 
+    {
+      name: "deepseek-ai/deepseek-r1-turbo",
+      provider: "DeepSeek AI",
       category: "DeepSeek",
       features: [
         "Ultra-fast inference speed",
@@ -446,9 +515,9 @@ const Models = () => {
         "Efficient resource utilization"
       ]
     },
-    { 
-      name: "deepseek-ai/deepseek-r1-distill-llama-70b", 
-      provider: "DeepSeek AI", 
+    {
+      name: "deepseek-ai/deepseek-r1-distill-llama-70b",
+      provider: "DeepSeek AI",
       category: "DeepSeek",
       features: [
         "Distilled from Llama 70B",
@@ -456,9 +525,9 @@ const Models = () => {
         "Strong reasoning capabilities"
       ]
     },
-    { 
-      name: "deepseek-ai/deepseek-r1-distill-qwen-32b", 
-      provider: "DeepSeek AI", 
+    {
+      name: "deepseek-ai/deepseek-r1-distill-qwen-32b",
+      provider: "DeepSeek AI",
       category: "DeepSeek",
       features: [
         "Distilled from Qwen 32B",
@@ -466,9 +535,9 @@ const Models = () => {
         "Strong reasoning capabilities"
       ]
     },
-    { 
-      name: "qwen/qwq-32b", 
-      provider: "Qwen", 
+    {
+      name: "qwen/qwq-32b",
+      provider: "Qwen",
       category: "Qwen",
       features: [
         "Specialized model for specific tasks",
@@ -476,9 +545,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "google/gemma-3-27b-it", 
-      provider: "Google", 
+    {
+      name: "google/gemma-3-27b-it",
+      provider: "Google",
       category: "Gemma",
       features: [
         "Instruction-tuned for better following",
@@ -486,9 +555,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "google/gemma-3-12b-it", 
-      provider: "Google", 
+    {
+      name: "google/gemma-3-12b-it",
+      provider: "Google",
       category: "Gemma",
       features: [
         "Instruction-tuned for better following",
@@ -496,9 +565,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "google/gemma-3-4b-it", 
-      provider: "Google", 
+    {
+      name: "google/gemma-3-4b-it",
+      provider: "Google",
       category: "Gemma",
       features: [
         "Instruction-tuned for better following",
@@ -506,9 +575,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "microsoft/phi-4-multimodal-instruct", 
-      provider: "Microsoft", 
+    {
+      name: "microsoft/phi-4-multimodal-instruct",
+      provider: "Microsoft",
       category: "Phi",
       features: [
         "Multimodal input support",
@@ -516,9 +585,9 @@ const Models = () => {
         "Small but powerful model"
       ]
     },
-    { 
-      name: "meta/llama-4-maverick-17b-128e-instruct-fp8", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-4-maverick-17b-128e-instruct-fp8",
+      provider: "Meta",
       category: "Llama",
       features: [
         "FP8 quantization for speed",
@@ -526,9 +595,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "meta/llama-3.3-70b-instruct-turbo", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.3-70b-instruct-turbo",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Ultra-fast inference speed",
@@ -536,9 +605,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "meta/llama-3.3-70b-instruct", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.3-70b-instruct",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Instruction-tuned for better following",
@@ -546,9 +615,9 @@ const Models = () => {
         "High accuracy on complex tasks"
       ]
     },
-    { 
-      name: "meta/meta-llama-3.1-8b-instruct-turbo", 
-      provider: "Meta", 
+    {
+      name: "meta/meta-llama-3.1-8b-instruct-turbo",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Ultra-fast inference speed",
@@ -556,9 +625,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "meta/llama-3.2-90b-vision-instruct", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.2-90b-vision-instruct",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Vision capabilities",
@@ -566,9 +635,9 @@ const Models = () => {
         "Strong reasoning capabilities"
       ]
     },
-    { 
-      name: "meta/llama-3.2-11b-vision-instruct", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.2-11b-vision-instruct",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Vision capabilities",
@@ -576,9 +645,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "mistralai/mistral-small-24b-instruct-2501", 
-      provider: "MistralAI", 
+    {
+      name: "mistralai/mistral-small-24b-instruct-2501",
+      provider: "MistralAI",
       category: "Mistral",
       features: [
         "Instruction-tuned for better following",
@@ -586,9 +655,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "qwen/qwen2.5-coder-32b-instruct", 
-      provider: "Qwen", 
+    {
+      name: "qwen/qwen2.5-coder-32b-instruct",
+      provider: "Qwen",
       category: "Qwen",
       features: [
         "Specialized for code generation",
@@ -596,9 +665,9 @@ const Models = () => {
         "Supports multiple programming languages"
       ]
     },
-    { 
-      name: "qwen/qwen2.5-72b-instruct", 
-      provider: "Qwen", 
+    {
+      name: "qwen/qwen2.5-72b-instruct",
+      provider: "Qwen",
       category: "Qwen",
       features: [
         "Instruction-tuned for better following",
@@ -606,9 +675,9 @@ const Models = () => {
         "High accuracy on complex tasks"
       ]
     },
-    { 
-      name: "nvidia/llama-3.1-nemotron-70b-instruct", 
-      provider: "NVIDIA", 
+    {
+      name: "nvidia/llama-3.1-nemotron-70b-instruct",
+      provider: "NVIDIA",
       category: "Llama",
       features: [
         "Optimized for NVIDIA hardware",
@@ -616,9 +685,9 @@ const Models = () => {
         "Strong reasoning capabilities"
       ]
     },
-    { 
-      name: "cohere/command-a-03-2025", 
-      provider: "Cohere", 
+    {
+      name: "cohere/command-a-03-2025",
+      provider: "Cohere",
       category: "Command",
       features: [
         "Latest Command model",
@@ -626,9 +695,9 @@ const Models = () => {
         "Improved performance"
       ]
     },
-    { 
-      name: "cohere/command-r-plus-08-2024", 
-      provider: "Cohere", 
+    {
+      name: "cohere/command-r-plus-08-2024",
+      provider: "Cohere",
       category: "Command",
       features: [
         "Enhanced Command-R model",
@@ -636,9 +705,9 @@ const Models = () => {
         "Improved performance"
       ]
     },
-    { 
-      name: "cohere/command-r-08-2024", 
-      provider: "Cohere", 
+    {
+      name: "cohere/command-r-08-2024",
+      provider: "Cohere",
       category: "Command",
       features: [
         "Latest Command-R model",
@@ -646,9 +715,9 @@ const Models = () => {
         "Improved performance"
       ]
     },
-    { 
-      name: "cohere/command-r-plus", 
-      provider: "Cohere", 
+    {
+      name: "cohere/command-r-plus",
+      provider: "Cohere",
       category: "Command",
       features: [
         "Enhanced Command-R model",
@@ -656,9 +725,9 @@ const Models = () => {
         "Improved performance"
       ]
     },
-    { 
-      name: "cohere/command-r", 
-      provider: "Cohere", 
+    {
+      name: "cohere/command-r",
+      provider: "Cohere",
       category: "Command",
       features: [
         "Command-R model",
@@ -666,9 +735,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "cohere/command-r7b-12-2024", 
-      provider: "Cohere", 
+    {
+      name: "cohere/command-r7b-12-2024",
+      provider: "Cohere",
       category: "Command",
       features: [
         "7B parameter Command model",
@@ -676,9 +745,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "cohere/command-r7b-arabic-02-2025", 
-      provider: "Cohere", 
+    {
+      name: "cohere/command-r7b-arabic-02-2025",
+      provider: "Cohere",
       category: "Command",
       features: [
         "Specialized for Arabic language",
@@ -686,9 +755,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "google/gemini-2.5-pro-exp-03-25", 
-      provider: "Google", 
+    {
+      name: "google/gemini-2.5-pro-exp-03-25",
+      provider: "Google",
       category: "Gemini",
       features: [
         "Preview of upcoming Gemini 2.5",
@@ -696,9 +765,9 @@ const Models = () => {
         "Early access to new features"
       ]
     },
-    { 
-      name: "google/gemini-2.0-pro-exp-02-05", 
-      provider: "Google", 
+    {
+      name: "google/gemini-2.0-pro-exp-02-05",
+      provider: "Google",
       category: "Gemini",
       features: [
         "Preview of upcoming Gemini 2.0",
@@ -706,9 +775,9 @@ const Models = () => {
         "Early access to new features"
       ]
     },
-    { 
-      name: "mistralai/mistral-small-3.1-24b-instruct", 
-      provider: "MistralAI", 
+    {
+      name: "mistralai/mistral-small-3.1-24b-instruct",
+      provider: "MistralAI",
       category: "Mistral",
       features: [
         "Instruction-tuned for better following",
@@ -716,9 +785,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "deepseek/deepseek-chat-v3-0324", 
-      provider: "DeepSeek", 
+    {
+      name: "deepseek/deepseek-chat-v3-0324",
+      provider: "DeepSeek",
       category: "DeepSeek",
       features: [
         "Chat-optimized DeepSeek v3",
@@ -726,9 +795,9 @@ const Models = () => {
         "Improved performance"
       ]
     },
-    { 
-      name: "meta/llama-4-maverick", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-4-maverick",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Latest Llama 4 model",
@@ -736,9 +805,9 @@ const Models = () => {
         "Improved performance"
       ]
     },
-    { 
-      name: "google/gemma2-9b-it", 
-      provider: "Google", 
+    {
+      name: "google/gemma2-9b-it",
+      provider: "Google",
       category: "Gemma",
       features: [
         "Instruction-tuned for better following",
@@ -746,9 +815,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "meta/llama-3.1-8b-instant", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.1-8b-instant",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Ultra-fast inference speed",
@@ -756,9 +825,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "meta/llama-3.2-1b-preview", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.2-1b-preview",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Preview of upcoming Llama 3.2",
@@ -766,9 +835,9 @@ const Models = () => {
         "Early access to new features"
       ]
     },
-    { 
-      name: "meta/llama-3.2-3b-preview", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.2-3b-preview",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Preview of upcoming Llama 3.2",
@@ -776,9 +845,9 @@ const Models = () => {
         "Early access to new features"
       ]
     },
-    { 
-      name: "meta/llama-3.2-90b-vision-preview", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.2-90b-vision-preview",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Preview of upcoming Llama 3.2",
@@ -786,9 +855,9 @@ const Models = () => {
         "Early access to new features"
       ]
     },
-    { 
-      name: "meta/llama-3.3-70b-specdec", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.3-70b-specdec",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Speculative decoding for speed",
@@ -796,9 +865,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "meta/llama3-70b-8192", 
-      provider: "Meta", 
+    {
+      name: "meta/llama3-70b-8192",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Extended context window (8192 tokens)",
@@ -806,9 +875,9 @@ const Models = () => {
         "High accuracy on complex tasks"
       ]
     },
-    { 
-      name: "meta/llama3-8b-8192", 
-      provider: "Meta", 
+    {
+      name: "meta/llama3-8b-8192",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Extended context window (8192 tokens)",
@@ -816,9 +885,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "qwen/qwen-2.5-32b", 
-      provider: "Qwen", 
+    {
+      name: "qwen/qwen-2.5-32b",
+      provider: "Qwen",
       category: "Qwen",
       features: [
         "Efficient 32B parameter size",
@@ -826,9 +895,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "qwen/qwen-2.5-coder-32b", 
-      provider: "Qwen", 
+    {
+      name: "qwen/qwen-2.5-coder-32b",
+      provider: "Qwen",
       category: "Qwen",
       features: [
         "Specialized for code generation",
@@ -836,9 +905,9 @@ const Models = () => {
         "Strong code understanding"
       ]
     },
-    { 
-      name: "meta/llama3.1-8b", 
-      provider: "Meta", 
+    {
+      name: "meta/llama3.1-8b",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Efficient 8B parameter size",
@@ -846,9 +915,9 @@ const Models = () => {
         "Balanced performance and speed"
       ]
     },
-    { 
-      name: "meta/llama-3.3-70b", 
-      provider: "Meta", 
+    {
+      name: "meta/llama-3.3-70b",
+      provider: "Meta",
       category: "Llama",
       features: [
         "Strong reasoning capabilities",
@@ -858,17 +927,205 @@ const Models = () => {
     }
   ];
 
+  // Function to convert fetched model names to ModelData format
+  const convertToModelData = (modelNames: string[]): ModelData[] => {
+    return modelNames.map(name => {
+      // Extract provider from model name if it contains a slash
+      let provider = "Unknown";
+      let category = "API";
+
+      if (name.includes('/')) {
+        const parts = name.split('/');
+        provider = parts[0].charAt(0).toUpperCase() + parts[0].slice(1); // Capitalize provider name
+      } else if (name.startsWith('gpt')) {
+        provider = "OpenAI";
+        category = "GPT";
+      } else if (name.includes('claude')) {
+        provider = "Anthropic";
+        category = "Claude";
+      } else if (name.includes('llama')) {
+        provider = "Meta";
+        category = "Llama";
+      } else if (name.includes('gemini')) {
+        provider = "Google";
+        category = "Gemini";
+      } else if (name.includes('mistral')) {
+        provider = "MistralAI";
+        category = "Mistral";
+      }
+
+      return {
+        name: name,
+        provider: provider,
+        category: category,
+        features: [
+          "Available via API",
+          "Dynamically fetched",
+          "Up-to-date model"
+        ]
+      };
+    });
+  };
+
+  // Function to fetch models from API
+  const fetchModelsFromAPI = async () => {
+    setIsLoadingModels(true);
+    try {
+      // Try to fetch models from the API with options to avoid preflight
+      const response = await openai.models.list({
+        headers: {
+          'X-Skip-Preflight': 'true'
+        }
+      });
+      console.log("Available models:", response.data);
+
+      if (response.data && response.data.length > 0) {
+        // Extract model IDs and sort them
+        const modelIds = response.data.map(model => model.id).sort();
+
+        // Save models to state
+        setFetchedModelNames(modelIds);
+
+        // Save models to localStorage with timestamp
+        const storedData: StoredModels = {
+          timestamp: Date.now(),
+          models: modelIds
+        };
+        localStorage.setItem('cepheus-models', JSON.stringify(storedData));
+
+        toast.success("Models updated successfully", {
+          description: `${modelIds.length} models loaded from API`
+        });
+
+        return modelIds;
+      } else {
+        // Fallback to default models list if API returns empty list
+        console.log("No models returned from API, using fallback list");
+        toast.error("No models returned from API", {
+          description: "Using fallback model list instead"
+        });
+        return fallbackModels;
+      }
+    } catch (error) {
+      console.error("Error fetching models:", error);
+      // Fallback to default models list if API call fails
+      toast.error("Failed to fetch models", {
+        description: "Using fallback model list instead"
+      });
+      return fallbackModels;
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
+  // Function to check if stored models are older than one day
+  const areModelsOutdated = (timestamp: number): boolean => {
+    const oneDayInMs = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    const now = Date.now();
+    return (now - timestamp) > oneDayInMs;
+  };
+
+  // Function to get models from localStorage or fetch from API if needed
+  const getModels = async () => {
+    try {
+      // Check if localStorage is available (might not be in some environments)
+      if (typeof window !== 'undefined' && window.localStorage) {
+        // Try to get models from localStorage
+        const storedModelsJson = localStorage.getItem('cepheus-models');
+
+        if (storedModelsJson) {
+          try {
+            const storedModels: StoredModels = JSON.parse(storedModelsJson);
+
+            // Check if models are outdated (older than one day)
+            if (areModelsOutdated(storedModels.timestamp)) {
+              console.log("Stored models are outdated, fetching new ones");
+              return await fetchModelsFromAPI();
+            } else {
+              console.log("Using stored models from localStorage");
+              setFetchedModelNames(storedModels.models);
+              return storedModels.models;
+            }
+          } catch (parseError) {
+            console.error("Error parsing stored models JSON:", parseError);
+            // Invalid JSON in localStorage, fetch from API
+            return await fetchModelsFromAPI();
+          }
+        } else {
+          // No models in localStorage, fetch from API
+          console.log("No models in localStorage, fetching from API");
+          return await fetchModelsFromAPI();
+        }
+      } else {
+        // localStorage not available, fetch from API
+        console.log("localStorage not available, fetching from API");
+        return await fetchModelsFromAPI();
+      }
+    } catch (error) {
+      console.error("Error getting models:", error);
+      return fallbackModels;
+    }
+  };
+
+  // Load models when component mounts
+  useEffect(() => {
+    getModels();
+  }, []);
+
+  // Function to manually refresh models
+  const handleRefreshModels = async () => {
+    await fetchModelsFromAPI();
+  };
+
+  // Convert fetched model names to ModelData format
+  const apiModels = convertToModelData(fetchedModelNames);
+
+  // Create a set of available model names for quick lookup
+  const availableModelNames = new Set(fetchedModelNames);
+
+  // Create combined models list with availability flag
+  const combinedModels = allModels.map(model => ({
+    ...model,
+    isAvailable: availableModelNames.has(model.name)
+  }));
+
+  // Add API models that don't exist in the catalog
+  apiModels.forEach(apiModel => {
+    if (!combinedModels.some(model => model.name === apiModel.name)) {
+      combinedModels.push({
+        ...apiModel,
+        isAvailable: true // API models are always available
+      });
+    }
+  });
+
   // Filter models based on search query
-  const filteredModels = allModels.filter(model => 
-    model.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredModels = combinedModels.filter(model =>
+    model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     model.provider.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Sort models based on selected order
   const sortedModels = [...filteredModels].sort((a, b) => {
-    if (sortOrder === "provider") {
+    if (sortOrder === "availability") {
+      // Sort by availability (available models first)
+      if (a.isAvailable && !b.isAvailable) return -1;
+      if (!a.isAvailable && b.isAvailable) return 1;
+      // If both have same availability, sort by name
+      return a.name.localeCompare(b.name);
+    } else if (sortOrder === "provider") {
+      // Sort by provider, but if availability differs and we're not explicitly sorting by provider,
+      // still prioritize available models
+      if (a.isAvailable !== b.isAvailable) {
+        return a.isAvailable ? -1 : 1;
+      }
       return a.provider.localeCompare(b.provider);
     } else if (sortOrder === "name") {
+      // Sort by name, but if availability differs and we're not explicitly sorting by name,
+      // still prioritize available models
+      if (a.isAvailable !== b.isAvailable) {
+        return a.isAvailable ? -1 : 1;
+      }
       return a.name.localeCompare(b.name);
     }
     return 0;
@@ -901,15 +1158,35 @@ const Models = () => {
       <div className="bg-cepheus-darker py-8 sm:py-12 lg:py-16">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-center">Available Models</h1>
-          <p className="text-lg sm:text-xl text-cepheus-gray-light max-w-3xl mx-auto text-center mb-8">
-            Access {allModels.length}+ cutting-edge AI models through our unified API
+          <p className="text-lg sm:text-xl text-cepheus-gray-light max-w-3xl mx-auto text-center mb-4">
+            Access {combinedModels.length}+ cutting-edge AI models through our unified API
           </p>
+          {fetchedModelNames.length > 0 && (
+            <p className="text-sm text-cepheus-gray-light text-center mb-8">
+              Last API update: {(() => {
+                try {
+                  if (typeof window !== 'undefined' && window.localStorage) {
+                    const storedData = localStorage.getItem('cepheus-models');
+                    if (storedData) {
+                      const parsed = JSON.parse(storedData);
+                      if (parsed && parsed.timestamp) {
+                        return new Date(parsed.timestamp).toLocaleString();
+                      }
+                    }
+                  }
+                  return 'Never';
+                } catch (error) {
+                  return 'Never';
+                }
+              })()}
+            </p>
+          )}
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8 sm:py-12">
-        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full sm:w-1/2 lg:w-1/3">
+        <div className="mb-6 sm:mb-8 space-y-4">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cepheus-gray" size={18} />
             <Input
               type="text"
@@ -919,66 +1196,159 @@ const Models = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          
-          <Button 
-            variant="outline" 
-            className="w-full sm:w-auto border-cepheus-gray-dark/50"
-            onClick={() => setSortOrder(sortOrder === "provider" ? "name" : "provider")}
-          >
-            <ArrowUpDown className="mr-2 h-4 w-4" />
-            Sort by {sortOrder === "provider" ? "Name" : "Provider"}
-          </Button>
+
+          <div className="flex flex-wrap gap-2 justify-between items-center">
+            <div className="flex flex-wrap gap-2">
+              <span className="text-cepheus-gray-light self-center mr-1">Sort by:</span>
+              <Button
+                variant={sortOrder === "availability" ? "default" : "outline"}
+                size="sm"
+                className={`${sortOrder === "availability" ? "bg-cepheus-green text-white" : "border-cepheus-gray-dark/50"}`}
+                onClick={() => setSortOrder("availability")}
+              >
+                Availability
+              </Button>
+              <Button
+                variant={sortOrder === "name" ? "default" : "outline"}
+                size="sm"
+                className={`${sortOrder === "name" ? "bg-cepheus-green text-white" : "border-cepheus-gray-dark/50"}`}
+                onClick={() => setSortOrder("name")}
+              >
+                Name
+              </Button>
+              <Button
+                variant={sortOrder === "provider" ? "default" : "outline"}
+                size="sm"
+                className={`${sortOrder === "provider" ? "bg-cepheus-green text-white" : "border-cepheus-gray-dark/50"}`}
+                onClick={() => setSortOrder("provider")}
+              >
+                Provider
+              </Button>
+            </div>
+
+            <Button
+              variant="outline"
+              className="border-cepheus-gray-dark/50"
+              onClick={handleRefreshModels}
+              disabled={isLoadingModels}
+            >
+              {isLoadingModels ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Refresh Models
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {sortedModels.map((model, index) => (
-            <div 
-              key={index} 
-              className="rounded-lg border border-cepheus-gray-dark/30 bg-cepheus-darker p-4 sm:p-6 hover:border-cepheus-green/50 transition-all group"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-semibold text-white truncate" title={model.name}>
-                    {model.name}
-                  </h3>
-                  <p className="text-cepheus-green text-sm truncate">{model.provider}</p>
+
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {sortedModels.map((model, index) => {
+            return (
+              <div
+                key={index}
+                className={`rounded-lg border ${model.isAvailable ? 'border-cepheus-green/30' : 'border-cepheus-gray-dark/30'} bg-cepheus-darker p-4 hover:border-cepheus-green/50 transition-all group h-full flex flex-col`}
+              >
+                {/* Model Header with Badge */}
+                <div className="mb-3 flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    {/* Provider and Category */}
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-cepheus-green text-sm font-medium">{model.provider}</p>
+                      <span className="flex items-center gap-1 px-2 py-0.5 bg-cepheus-dark rounded-full text-xs text-cepheus-gray shrink-0">
+                        {getModelIcon(model.category)}
+                        <span className="hidden sm:inline">{model.category}</span>
+                      </span>
+                    </div>
+
+                    {/* Model Name with Availability Badge */}
+                    <div className="flex items-start gap-2 flex-wrap">
+                      <h3 className="text-base font-semibold text-white break-all" title={model.name}>
+                        {model.name}
+                      </h3>
+                      {model.isAvailable ? (
+                        <span className="bg-cepheus-green/20 text-cepheus-green text-xs px-1.5 py-0.5 rounded-full shrink-0 self-start mt-1">
+                          Available
+                        </span>
+                      ) : (
+                        <span className="bg-cepheus-gray-dark/20 text-cepheus-gray text-xs px-1.5 py-0.5 rounded-full shrink-0 self-start mt-1">
+                          Unavailable
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <span className="flex items-center gap-1.5 ml-2 px-2 py-1 bg-cepheus-dark rounded text-xs text-cepheus-gray shrink-0">
-                  {getModelIcon(model.category)}
-                  {model.category}
-                </span>
+
+                {/* Features Preview */}
+                <div className="mt-2 text-xs text-cepheus-gray-light flex-1">
+                  <ul className="space-y-1 list-disc pl-4">
+                    {model.features.slice(0, 2).map((feature, idx) => (
+                      <li key={idx} className="line-clamp-1">{feature}</li>
+                    ))}
+                    {model.features.length > 2 && (
+                      <li className="text-cepheus-gray">+{model.features.length - 2} more features</li>
+                    )}
+                  </ul>
+                </div>
+
+                {/* Footer with Details Button */}
+                <div className="mt-4 pt-4 border-t border-cepheus-gray-dark/30">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="link" className="p-0 h-auto text-cepheus-gray-light hover:text-cepheus-green text-xs">
+                        <Info className="h-4 w-4 mr-1" />
+                        View details
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-cepheus-darker border-cepheus-gray-dark/50 p-3 max-w-xs">
+                      <div className="font-medium mb-2 text-cepheus-green">{model.name} Features</div>
+                      <ul className="text-xs space-y-1">
+                        {model.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <span className="text-cepheus-green mr-1">•</span>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
-              
-              <div className="mt-4 pt-4 border-t border-cepheus-gray-dark/30 flex items-center justify-between">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="link" className="p-0 h-auto text-cepheus-gray-light hover:text-cepheus-green text-xs sm:text-sm">
-                      <Info className="h-4 w-4 mr-1" />
-                      View details
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-cepheus-darker border-cepheus-gray-dark/50 p-3 max-w-xs">
-                    <div className="font-medium mb-2 text-cepheus-green">{model.name} Features</div>
-                    <ul className="text-xs space-y-1">
-                      {model.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start">
-                          <span className="text-cepheus-green mr-1">•</span>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="mt-8 text-center">
-          <p className="text-cepheus-gray mb-2">Displaying {sortedModels.length} models</p>
+          <p className="text-cepheus-gray mb-2">
+            Displaying {sortedModels.length} models
+            {fetchedModelNames.length > 0 && ` (${sortedModels.filter(m => m.isAvailable).length} available, ${sortedModels.filter(m => !m.isAvailable).length} unavailable)`}
+          </p>
+
+          {sortOrder === "availability" && (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-cepheus-dark/50 rounded-full text-xs text-cepheus-gray-light mb-3">
+              <span className="bg-cepheus-green/20 text-cepheus-green text-xs px-1.5 py-0.5 rounded-full">
+                Available
+              </span>
+              Models are shown first when sorting by Availability
+            </div>
+          )}
+
           <p className="text-cepheus-gray-light text-sm sm:text-base">
             Need a specific model not listed here? <a href="#" className="text-cepheus-green hover:underline">Contact us</a> for custom integrations.
           </p>
+
+          {fetchedModelNames.length > 0 && (
+            <p className="text-cepheus-gray-light text-xs mt-2">
+              Model availability is refreshed automatically on daily basis or manually using the refresh button.
+            </p>
+          )}
         </div>
       </div>
     </MainLayout>
