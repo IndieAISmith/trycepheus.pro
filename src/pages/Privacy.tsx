@@ -118,7 +118,7 @@ const Privacy = () => {
               If you have any questions about this Privacy Policy, please contact us at:
             </p>
             <p className="text-cepheus-green">
-              privacy@cepheus.ai
+              contact@trycepheus.pro
             </p>
           </section>
 

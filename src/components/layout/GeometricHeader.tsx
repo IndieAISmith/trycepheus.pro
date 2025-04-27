@@ -114,8 +114,8 @@ const GeometricHeader = () => {
       {/* Hero Geometric Component */}
       <HeroGeometric
         badge="Cepheus AI"
-        title1="High-Performance"
-        title2="AI Infrastructure"
+        title1="The Smarter Way to"
+        title2="Access LLMs with Ease"
       />
     </header>
   );

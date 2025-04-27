@@ -33,7 +33,7 @@ const customFetch = async (url: RequestInfo | URL, init?: RequestInit) => {
 
 // Create OpenAI client instance
 const openai = new OpenAI({
-  baseURL: "https://cepheus-x.vercel.app/v1/",
+  baseURL: "https://cepheus-x.vercel.app/v1/", // Correct API endpoint
   apiKey: "sk-efghijkl5678mnopabcd1234efghijkl5678mnop",
   dangerouslyAllowBrowser: true, // Required for client-side usage
   timeout: 30000, // 30 seconds timeout
@@ -79,7 +79,7 @@ interface StoredModels {
 
 const Models = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState("availability");
+  const [sortOrder, setSortOrder] = useState("name");
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [fetchedModelNames, setFetchedModelNames] = useState<string[]>([]);
 
@@ -977,7 +977,7 @@ const Models = () => {
           'X-Skip-Preflight': 'true'
         }
       });
-      console.log("Available models:", response.data);
+
 
       if (response.data && response.data.length > 0) {
         // Extract model IDs and sort them
@@ -1000,18 +1000,24 @@ const Models = () => {
         return modelIds;
       } else {
         // Fallback to default models list if API returns empty list
-        console.log("No models returned from API, using fallback list");
-        toast.error("No models returned from API", {
+        toast.warning("No models returned from API", {
           description: "Using fallback model list instead"
         });
+
+        // Set the fallback models in state
+        setFetchedModelNames(fallbackModels);
         return fallbackModels;
       }
     } catch (error) {
-      console.error("Error fetching models:", error);
+
+
       // Fallback to default models list if API call fails
-      toast.error("Failed to fetch models", {
-        description: "Using fallback model list instead"
+      toast.warning("Using fallback models", {
+        description: "API connection failed. Using pre-configured model list instead."
       });
+
+      // Set the fallback models in state
+      setFetchedModelNames(fallbackModels);
       return fallbackModels;
     } finally {
       setIsLoadingModels(false);
@@ -1039,30 +1045,28 @@ const Models = () => {
 
             // Check if models are outdated (older than one day)
             if (areModelsOutdated(storedModels.timestamp)) {
-              console.log("Stored models are outdated, fetching new ones");
+
               return await fetchModelsFromAPI();
             } else {
-              console.log("Using stored models from localStorage");
+
               setFetchedModelNames(storedModels.models);
               return storedModels.models;
             }
           } catch (parseError) {
-            console.error("Error parsing stored models JSON:", parseError);
+
             // Invalid JSON in localStorage, fetch from API
             return await fetchModelsFromAPI();
           }
         } else {
           // No models in localStorage, fetch from API
-          console.log("No models in localStorage, fetching from API");
           return await fetchModelsFromAPI();
         }
       } else {
         // localStorage not available, fetch from API
-        console.log("localStorage not available, fetching from API");
         return await fetchModelsFromAPI();
       }
     } catch (error) {
-      console.error("Error getting models:", error);
+
       return fallbackModels;
     }
   };
@@ -1099,36 +1103,23 @@ const Models = () => {
     }
   });
 
-  // Filter models based on search query
+  // Filter models based on availability and search query
   const filteredModels = combinedModels.filter(model =>
-    model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    model.provider.toLowerCase().includes(searchQuery.toLowerCase())
+    model.isAvailable && (
+      model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      model.provider.toLowerCase().includes(searchQuery.toLowerCase())
+    )
   );
 
   // Sort models based on selected order
   const sortedModels = [...filteredModels].sort((a, b) => {
-    if (sortOrder === "availability") {
-      // Sort by availability (available models first)
-      if (a.isAvailable && !b.isAvailable) return -1;
-      if (!a.isAvailable && b.isAvailable) return 1;
-      // If both have same availability, sort by name
-      return a.name.localeCompare(b.name);
-    } else if (sortOrder === "provider") {
-      // Sort by provider, but if availability differs and we're not explicitly sorting by provider,
-      // still prioritize available models
-      if (a.isAvailable !== b.isAvailable) {
-        return a.isAvailable ? -1 : 1;
-      }
+    if (sortOrder === "provider") {
       return a.provider.localeCompare(b.provider);
     } else if (sortOrder === "name") {
-      // Sort by name, but if availability differs and we're not explicitly sorting by name,
-      // still prioritize available models
-      if (a.isAvailable !== b.isAvailable) {
-        return a.isAvailable ? -1 : 1;
-      }
       return a.name.localeCompare(b.name);
     }
-    return 0;
+    // Default to name sorting
+    return a.name.localeCompare(b.name);
   });
 
   // Get icon based on model category
@@ -1159,7 +1150,7 @@ const Models = () => {
         <div className="container mx-auto px-4">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-center">Available Models</h1>
           <p className="text-lg sm:text-xl text-cepheus-gray-light max-w-3xl mx-auto text-center mb-4">
-            Access {combinedModels.length}+ cutting-edge AI models through our unified API
+            Access {sortedModels.length} available AI models through our unified API
           </p>
           {fetchedModelNames.length > 0 && (
             <p className="text-sm text-cepheus-gray-light text-center mb-8">
@@ -1200,14 +1191,6 @@ const Models = () => {
           <div className="flex flex-wrap gap-2 justify-between items-center">
             <div className="flex flex-wrap gap-2">
               <span className="text-cepheus-gray-light self-center mr-1">Sort by:</span>
-              <Button
-                variant={sortOrder === "availability" ? "default" : "outline"}
-                size="sm"
-                className={`${sortOrder === "availability" ? "bg-cepheus-green text-white" : "border-cepheus-gray-dark/50"}`}
-                onClick={() => setSortOrder("availability")}
-              >
-                Availability
-              </Button>
               <Button
                 variant={sortOrder === "name" ? "default" : "outline"}
                 size="sm"
@@ -1254,7 +1237,7 @@ const Models = () => {
             return (
               <div
                 key={index}
-                className={`rounded-lg border ${model.isAvailable ? 'border-cepheus-green/30' : 'border-cepheus-gray-dark/30'} bg-cepheus-darker p-4 hover:border-cepheus-green/50 transition-all group h-full flex flex-col`}
+                className="rounded-lg border border-cepheus-green/30 bg-cepheus-darker p-4 hover:border-cepheus-green/50 transition-all group h-full flex flex-col"
               >
                 {/* Model Header with Badge */}
                 <div className="mb-3 flex items-start justify-between">
@@ -1268,20 +1251,11 @@ const Models = () => {
                       </span>
                     </div>
 
-                    {/* Model Name with Availability Badge */}
+                    {/* Model Name */}
                     <div className="flex items-start gap-2 flex-wrap">
                       <h3 className="text-base font-semibold text-white break-all" title={model.name}>
                         {model.name}
                       </h3>
-                      {model.isAvailable ? (
-                        <span className="bg-cepheus-green/20 text-cepheus-green text-xs px-1.5 py-0.5 rounded-full shrink-0 self-start mt-1">
-                          Available
-                        </span>
-                      ) : (
-                        <span className="bg-cepheus-gray-dark/20 text-cepheus-gray text-xs px-1.5 py-0.5 rounded-full shrink-0 self-start mt-1">
-                          Unavailable
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -1327,18 +1301,8 @@ const Models = () => {
 
         <div className="mt-8 text-center">
           <p className="text-cepheus-gray mb-2">
-            Displaying {sortedModels.length} models
-            {fetchedModelNames.length > 0 && ` (${sortedModels.filter(m => m.isAvailable).length} available, ${sortedModels.filter(m => !m.isAvailable).length} unavailable)`}
+            Displaying {sortedModels.length} available models
           </p>
-
-          {sortOrder === "availability" && (
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-cepheus-dark/50 rounded-full text-xs text-cepheus-gray-light mb-3">
-              <span className="bg-cepheus-green/20 text-cepheus-green text-xs px-1.5 py-0.5 rounded-full">
-                Available
-              </span>
-              Models are shown first when sorting by Availability
-            </div>
-          )}
 
           <p className="text-cepheus-gray-light text-sm sm:text-base">
             Need a specific model not listed here? <a href="#" className="text-cepheus-green hover:underline">Contact us</a> for custom integrations.

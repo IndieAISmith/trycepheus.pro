@@ -417,7 +417,7 @@ const Playground = () => {
 
   // Create OpenAI client instance
   const openai = new OpenAI({
-    baseURL: "https://cepheus-x.vercel.app/v1/",
+    baseURL: "https://cepheus-x.vercel.app/v1/", // Correct API endpoint
     apiKey: "sk-efghijkl5678mnopabcd1234efghijkl5678mnop",
     dangerouslyAllowBrowser: true, // Required for client-side usage
     timeout: 30000, // 30 seconds timeout
@@ -452,7 +452,7 @@ const Playground = () => {
             'X-Skip-Preflight': 'true'
           }
         });
-        console.log("Available models:", response.data);
+
 
         if (response.data && response.data.length > 0) {
           // Extract model IDs and sort them
@@ -465,7 +465,6 @@ const Playground = () => {
           }
         } else {
           // Fallback to default models list if API returns empty list
-          console.log("No models returned from API, using fallback list");
           setModels(fallbackModels);
 
           // Set the first model from fallback list as the default selection
@@ -474,7 +473,8 @@ const Playground = () => {
           }
         }
       } catch (error) {
-        console.error("Error fetching models:", error);
+
+
         // Fallback to default models list if API call fails
         setModels(fallbackModels);
 
@@ -554,7 +554,7 @@ if __name__ == "__main__":
     setIsLoading(true);
 
     try {
-      console.log("Sending request to model:", selectedModel);
+
 
       // Try to make API call using OpenAI library
       try {
@@ -575,7 +575,7 @@ if __name__ == "__main__":
           }
         );
 
-        console.log("API Response:", response);
+
 
         // Format the response content for proper markdown rendering
         let content = response.choices[0].message.content || "No response content";
@@ -621,11 +621,7 @@ if __name__ == "__main__":
 
         setMessages(prev => [...prev, aiResponse]);
       } catch (apiError) {
-        console.error("API Error:", apiError);
-
         // If we can't connect to the API, fall back to simulation mode
-        console.log("Falling back to simulation mode due to API connection error");
-        console.error("API Error details:", apiError);
         const simulatedResponse = await simulateApiCall(selectedModel, [...messages, newUserMessage]);
 
         // Format code blocks with markdown syntax for proper rendering
@@ -679,7 +675,7 @@ if __name__ == "__main__":
         }]);
       }
     } catch (error) {
-      console.error("Error in message handling:", error);
+
 
       // Extract error message from OpenAI error object
       let errorMessage = "Unknown error occurred";

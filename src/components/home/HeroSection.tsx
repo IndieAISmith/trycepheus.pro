@@ -15,13 +15,8 @@ const HeroSection = () => {
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <div className="text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight">
-            <span className="block">High-Performance</span>
-            <span className="block mt-2 gradient-text">AI Infrastructure</span>
-          </h1>
           <p className="mt-4 sm:mt-6 max-w-2xl mx-auto text-base sm:text-lg lg:text-xl text-cepheus-gray-light">
-            Cepheus provides <span className="text-cepheus-green">OpenAI-compatible APIs</span> for FREE during beta. 
-            Easily integrate with 80+ cutting-edge AI models with a simple API call.
+            <span className="text-cepheus-green"> Fast, reliable, and free during beta.</span>
           </p>
           <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row justify-center gap-4 px-4">
             <Button asChild className="text-black bg-cepheus-green hover:bg-cepheus-green-dark px-6 py-5 w-full sm:w-auto text-base sm:text-lg">

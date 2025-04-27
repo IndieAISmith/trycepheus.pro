@@ -71,7 +71,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-cepheus-green text-sm">
+                <a href="mailto:contact@trycepheus.pro" className="text-gray-400 hover:text-cepheus-green text-sm">
                   Contact
                 </a>
               </li>

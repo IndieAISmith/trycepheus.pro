@@ -193,8 +193,7 @@ function HeroGeometric({
                         animate="visible"
                     >
                         <p className="text-base sm:text-lg md:text-xl text-cepheus-gray-light mb-8 leading-relaxed font-light tracking-wide max-w-xl mx-auto px-4">
-                            Cepheus provides <span className="text-cepheus-green">OpenAI-compatible APIs</span> for FREE during beta.
-                            Easily integrate with 80+ cutting-edge AI models with a simple API call.
+                            <span className="text-cepheus-green"> Fast, reliable, and free during beta.</span>
                         </p>
                     </motion.div>
 
