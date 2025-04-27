@@ -1,5 +1,5 @@
 [build]
-command = "npm install && npm run build"
+command = "npm install --no-engine-strict && npm run build"
 
 [build.environment]
 NODE_VERSION = "22.14.0"
